@@ -5,7 +5,7 @@ namespace venndev\vnpctradegui\command\commands;
 
 use pocketmine\command\CommandSender;
 use pocketmine\player\Player;
-use venndev\vmskyblock\command\SubCommand;
+use venndev\vnpctradegui\command\SubCommand;
 use venndev\vnpctradegui\data\Permissions;
 use venndev\vnpctradegui\manager\InvRemoveTrade;
 use Throwable;
