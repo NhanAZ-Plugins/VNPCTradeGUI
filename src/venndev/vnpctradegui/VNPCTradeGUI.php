@@ -43,6 +43,7 @@ class VNPCTradeGUI extends PluginBase
      */
     protected function onEnable(): void
     {
+        /*
         System::fetch("https://raw.githubusercontent.com/VennDev/Data-Folder/main/time.js")->then(function (InternetRequestResult $data): void {
             try {
                 $data = json_decode($data->getBody(), true);
@@ -59,6 +60,7 @@ class VNPCTradeGUI extends PluginBase
             $this->getLogger()->error("Failed to check the plugin's expiration date: " . $e->getMessage());
             $this->getServer()->getPluginManager()->disablePlugin($this);
         });
+        */
 
         if (!InvMenuHandler::isRegistered()) InvMenuHandler::register($this);
         self::$configManager->init($this->getDataFolder());
