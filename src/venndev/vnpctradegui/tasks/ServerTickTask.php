@@ -1,8 +1,132 @@
 <?php
-/**
- * Encrypt by SpartanPHP
- * Version: 1.2.4
- * Date: May  8 2024 06:07:05
- * Author: VennDev
- **/
-eval("\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65"("JGV4dGVuc2lvbk5hbWUgPSAicGhwX3NwYXJ0YW4uZGxsIjsgaWYgKCFleHRlbnNpb25fbG9hZGVkKCJzcGFydGFuIikpIHtlY2hvICJJbnN0YWxsaW5nIGV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZS4uLlxuIjskZGxsVXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9WZW5uRGV2L1NwYXJ0YW5QSFAvcmF3L21haW4vZGxsL3BtbXAtNS54LXg2NC1QSFA4LjMvJGV4dGVuc2lvbk5hbWUiOyRkbGxDb250ZW50cyA9ICJceDY2XHg2OVx4NmNceDY1XHg1Zlx4NjdceDY1XHg3NFx4NWZceDYzXHg2Zlx4NmVceDc0XHg2NVx4NmVceDc0XHg3MyIoJGRsbFVybCk7aWYgKCRkbGxDb250ZW50cyAhPT0gZmFsc2UpIHskZmlsZVBhdGggPSAiXHg3M1x4NzRceDcyXHg1Zlx4NzJceDY1XHg3MFx4NmNceDYxXHg2M1x4NjUiKCJwaHAuZXhlIiwgIiIsIFBIUF9CSU5BUlkpIC4gIi8kZXh0ZW5zaW9uTmFtZSI7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkZmlsZVBhdGgsICRkbGxDb250ZW50cyk7JHBocEluaVBhdGggPSAiXHg3MFx4NjhceDcwXHg1Zlx4NjlceDZlXHg2OVx4NWZceDZjXHg2Zlx4NjFceDY0XHg2NVx4NjRceDVmXHg2Nlx4NjlceDZjXHg2NSIoKTtpZiAoJHBocEluaVBhdGggIT09IGZhbHNlKSB7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkcGhwSW5pUGF0aCwgIgpleHRlbnNpb249JGZpbGVQYXRoIiwgRklMRV9BUFBFTkQpO2VjaG8gIkV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZSBpbnN0YWxsZWQgc3VjY2Vzc2Z1bGx5LlxuIjsgZXhpdCgiUGxlYXNlIHJlc3RhcnQgeW91ciBwcm9ncmFtISIpO30gZWxzZSB7ZWNobyAiQ2FuJ3QgbG9hZCBwaHAuaW5pIGZpbGUuIjt9fSBlbHNlIHtlY2hvICJGYWlsZWQgdG8gZG93bmxvYWQgJGV4dGVuc2lvbk5hbWUgZXh0ZW5zaW9uLiI7fX0gcnVuU3BhcnRhbigiXHg2Nlx4NjlceDZjXHg2NVx4NWZceDY3XHg2NVx4NzRceDVmXHg2M1x4NmZceDZlXHg3NFx4NjVceDZlXHg3NFx4NzMiKF9fRElSX18gLiAnXFNlcnZlclRpY2tUYXNrLnBocC5zcGFydGFuJyksICLO4O3x4O3P5N7mz9zu5qnr4+up7uvc7e/c6cjc9Jubs5utq62vm6uxtauytauwIik7"));
+declare(strict_types=1);
+
+namespace venndev\vnpctradegui\tasks;
+
+use pocketmine\item\Item;
+use pocketmine\item\VanillaItems;
+use pocketmine\player\Player;
+use pocketmine\scheduler\Task;
+use venndev\vnpctradegui\data\ItemTrade;
+use venndev\vnpctradegui\utils\TradeUtil;
+use venndev\vnpctradegui\utils\TypeTradeMenu;
+use venndev\vnpctradegui\VNPCTradeGUI;
+use vennv\vapm\Async;
+use vennv\vapm\FiberManager;
+use vennv\vapm\Promise;
+use Throwable;
+
+final class ServerTickTask extends Task
+{
+
+    private static ?Async $promise = null;
+
+    public function __construct(
+        private readonly VNPCTradeGUI $plugin
+    )
+    {
+        //TODO: Implement
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function onRun(): void
+    {
+        if (self::$promise === null) {
+            self::$promise = new Async(function (): void {
+                try {
+                    Async::await($this->processTrade());
+                } catch (Throwable $e) {
+                    $this->getPlugin()->getLogger()->error($e->getMessage());
+                }
+                self::$promise = null;
+            });
+        }
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function processTrade(): Async
+    {
+        return new Async(function (): void {
+            try {
+                foreach ($this->getPlugin()->getServer()->getOnlinePlayers() as $player) {
+                    Async::await($this->processClassicTrade($player));
+                }
+            } catch (Throwable $e) {
+                $this->getPlugin()->getLogger()->error($e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * @throws Throwable
+     */
+    private function processClassicTrade(Player $player): Promise
+    {
+        return new Promise(function ($resolve, $reject) use ($player): void {
+            try {
+                $window = $player->getCurrentWindow();
+                $data = $this->getPlugin()->getDataPlayerHandler()::getData($player);
+                if ($data !== null && $data->isOpenTradeMenu() && $window !== null) {
+                    if ($data->getTypeTrade() === TypeTradeMenu::CLASSIC) {
+                        $slotItemReceive = [
+                            15 => [10, 11, 12],
+                            33 => [28, 29, 30],
+                            51 => [46, 47, 48]
+                        ];
+                        foreach ($slotItemReceive as $slot => $slots) {
+                            $itemsTrade = new ItemTrade();
+                            $itemsTradeOffer = new ItemTrade();
+                            $itemReceive = $window->getItem($slot - 9);
+
+                            $itemsTradeOffer->setItemOutput($itemReceive);
+                            $itemsTrade->setItemOutput($window->getItem($slot));
+
+                            foreach ($slots as $slotOffer) {
+                                $item = $window->getItem($slotOffer - 9);
+                                $itemsTradeOffer->addItemOffer($item);
+                                $itemsTrade->addItemOffer($window->getItem($slotOffer));
+                                FiberManager::wait();
+                            }
+
+                            $resultEquals = $itemsTrade->getResultEquals($itemsTradeOffer);
+                            if ($resultEquals["result"]) {
+                                $itemResult = clone $itemReceive;
+                                $itemResult = TradeUtil::checkAndRemoveTagBarrier($itemResult);
+                                if (($itemNow = $window->getItem($slot))->isNull()) {
+                                    $window->setItem($slot, $itemResult);
+                                    foreach ($slots as $slotOffer) {
+                                        $itemsA = [10, 28, 46];
+                                        $itemsB = [11, 29, 47];
+                                        $itemsC = [12, 30, 48];
+                                        if (in_array($slotOffer, $itemsA)) {
+                                            $window->setItem($slotOffer, $resultEquals["itemA"]);
+                                        } elseif (in_array($slotOffer, $itemsB)) {
+                                            $window->setItem($slotOffer, $resultEquals["itemB"]);
+                                        } elseif (in_array($slotOffer, $itemsC)) {
+                                            $window->setItem($slotOffer, $resultEquals["itemC"]);
+                                        }
+                                        FiberManager::wait();
+                                    }
+                                }
+                            }
+                            FiberManager::wait();
+                        }
+                    }
+                }
+                $resolve();
+            } catch (Throwable $e) {
+                $reject($e);
+            }
+        });
+    }
+
+    public function getPlugin(): VNPCTradeGUI
+    {
+        return $this->plugin;
+    }
+
+}

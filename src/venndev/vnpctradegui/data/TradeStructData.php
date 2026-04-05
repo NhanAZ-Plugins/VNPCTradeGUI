@@ -1,8 +1,296 @@
 <?php
-/**
- * Encrypt by SpartanPHP
- * Version: 1.2.4
- * Date: May  8 2024 06:07:05
- * Author: VennDev
- **/
-eval("\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65"("JGV4dGVuc2lvbk5hbWUgPSAicGhwX3NwYXJ0YW4uZGxsIjsgaWYgKCFleHRlbnNpb25fbG9hZGVkKCJzcGFydGFuIikpIHtlY2hvICJJbnN0YWxsaW5nIGV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZS4uLlxuIjskZGxsVXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9WZW5uRGV2L1NwYXJ0YW5QSFAvcmF3L21haW4vZGxsL3BtbXAtNS54LXg2NC1QSFA4LjMvJGV4dGVuc2lvbk5hbWUiOyRkbGxDb250ZW50cyA9ICJceDY2XHg2OVx4NmNceDY1XHg1Zlx4NjdceDY1XHg3NFx4NWZceDYzXHg2Zlx4NmVceDc0XHg2NVx4NmVceDc0XHg3MyIoJGRsbFVybCk7aWYgKCRkbGxDb250ZW50cyAhPT0gZmFsc2UpIHskZmlsZVBhdGggPSAiXHg3M1x4NzRceDcyXHg1Zlx4NzJceDY1XHg3MFx4NmNceDYxXHg2M1x4NjUiKCJwaHAuZXhlIiwgIiIsIFBIUF9CSU5BUlkpIC4gIi8kZXh0ZW5zaW9uTmFtZSI7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkZmlsZVBhdGgsICRkbGxDb250ZW50cyk7JHBocEluaVBhdGggPSAiXHg3MFx4NjhceDcwXHg1Zlx4NjlceDZlXHg2OVx4NWZceDZjXHg2Zlx4NjFceDY0XHg2NVx4NjRceDVmXHg2Nlx4NjlceDZjXHg2NSIoKTtpZiAoJHBocEluaVBhdGggIT09IGZhbHNlKSB7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkcGhwSW5pUGF0aCwgIgpleHRlbnNpb249JGZpbGVQYXRoIiwgRklMRV9BUFBFTkQpO2VjaG8gIkV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZSBpbnN0YWxsZWQgc3VjY2Vzc2Z1bGx5LlxuIjsgZXhpdCgiUGxlYXNlIHJlc3RhcnQgeW91ciBwcm9ncmFtISIpO30gZWxzZSB7ZWNobyAiQ2FuJ3QgbG9hZCBwaHAuaW5pIGZpbGUuIjt9fSBlbHNlIHtlY2hvICJGYWlsZWQgdG8gZG93bmxvYWQgJGV4dGVuc2lvbk5hbWUgZXh0ZW5zaW9uLiI7fX0gcnVuU3BhcnRhbigiXHg2Nlx4NjlceDZjXHg2NVx4NWZceDY3XHg2NVx4NzRceDVmXHg2M1x4NmZceDZlXHg3NFx4NjVceDZlXHg3NFx4NzMiKF9fRElSX18gLiAnXFRyYWRlU3RydWN0RGF0YS5waHAuc3BhcnRhbicpLCAiz+3c3+DO7+3w3u+/3O/cqevj66nu69zt79zpyNz0m5uzm62rra+bq7G1q7K1q7AiKTs="));
+declare(strict_types=1);
+
+namespace venndev\vnpctradegui\data;
+
+use pocketmine\item\Item;
+use Throwable;
+use venndev\vnpctradegui\utils\ColorUtil;
+use venndev\vnpctradegui\utils\ItemUtil;
+use venndev\vnpctradegui\utils\TypeTradeMenu;
+use venndev\vnpctradegui\VNPCTradeGUI;
+use vennv\vapm\Async;
+use vennv\vapm\FiberManager;
+use vennv\vapm\Promise;
+
+final class TradeStructData
+{
+
+    private string $uid;
+
+    /**
+     * @var array<int, string(encoded_item)>
+     */
+    private array $itemsBackGround = [];
+
+    /**
+     * @var array<int, string(encoded_item)>
+     */
+    private array $itemsTrade = [];
+
+    private Item $itemSpace;
+
+    private int $slotNextPage = 53;
+    private int $slotPrevious = 45;
+    private string $itemNextPage;
+    private string $itemPrevious;
+
+    public function __construct(
+        private string $name,
+        private string $description,
+        private string $typeTrade = TypeTradeMenu::CLASSIC
+    )
+    {
+        $this->uid = uniqid($name);
+        $this->itemNextPage = ItemUtil::encodeItem(ItemUtil::getItem("arrow"));
+        $this->itemPrevious = ItemUtil::encodeItem(ItemUtil::getItem("arrow"));
+        $this->itemSpace = ItemUtil::getItem("barrier");
+    }
+
+    public function getUid(): string
+    {
+        return $this->uid;
+    }
+
+    public function getTypeTrade(): string
+    {
+        return $this->typeTrade;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getItemsBackGround(): array
+    {
+        return $this->itemsBackGround;
+    }
+
+    public function getItemsTrade(): array
+    {
+        return $this->itemsTrade;
+    }
+
+    public function getSlotNextPage(): int
+    {
+        return $this->slotNextPage;
+    }
+
+    public function getSlotPrevious(): int
+    {
+        return $this->slotPrevious;
+    }
+
+    public function getItemNextPage(): string
+    {
+        return $this->itemNextPage;
+    }
+
+    public function getItemPrevious(): string
+    {
+        return $this->itemPrevious;
+    }
+
+    public function getItemSpace(): Item
+    {
+        return $this->itemSpace;
+    }
+
+    public function setUid(string $uid): void
+    {
+        $this->uid = $uid;
+    }
+
+    public function setTypeTrade(string $typeTrade): void
+    {
+        $this->typeTrade = $typeTrade;
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function setDescription(string $description): void
+    {
+        $this->description = $description;
+    }
+
+    public function setItemsBackGround(array $slotsBackGround): void
+    {
+        $this->itemsBackGround = $slotsBackGround;
+    }
+
+    public function setItemsTrade(array $slotsTrade): void
+    {
+        $this->itemsTrade = $slotsTrade;
+    }
+
+    public function setSlotNextPage(int $slotNextPage): void
+    {
+        $this->slotNextPage = $slotNextPage;
+    }
+
+    public function setSlotPrevious(int $slotPrevious): void
+    {
+        $this->slotPrevious = $slotPrevious;
+    }
+
+    public function setItemNextPage(string $itemNextPage): void
+    {
+        $this->itemNextPage = $itemNextPage;
+    }
+
+    public function setItemPrevious(string $itemPrevious): void
+    {
+        $this->itemPrevious = $itemPrevious;
+    }
+
+    public function setItemBackGround(int $slot, string $item): void
+    {
+        $this->itemsBackGround[$slot] = $item;
+    }
+
+    public function setItemSpace(Item $itemSpace): void
+    {
+        $this->itemSpace = $itemSpace;
+    }
+
+    public function removeItemBackGround(int $slot): void
+    {
+        unset($this->itemsBackGround[$slot]);
+    }
+
+    public function addItemTrade(ItemTrade $itemTrade): void
+    {
+        $this->itemsTrade[] = $itemTrade->toArray();
+    }
+
+    public function isItemBackGround(string $item): bool
+    {
+        return in_array($item, $this->itemsBackGround);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'uid' => $this->uid,
+            'typeTrade' => $this->typeTrade,
+            'name' => $this->name,
+            'description' => $this->description,
+            'itemsBackGround' => $this->itemsBackGround,
+            'itemsTrade' => $this->itemsTrade,
+            'slotNextPage' => $this->slotNextPage,
+            'slotPrevious' => $this->slotPrevious,
+            'itemNextPage' => $this->itemNextPage,
+            'itemPrevious' => $this->itemPrevious,
+            'itemSpace' => ItemUtil::encodeItem($this->itemSpace),
+        ];
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function getListPageItemsTrade(int $limitItemsInPage, int $page): Promise
+    {
+        return new Promise(function ($resolve, $reject) use ($limitItemsInPage, $page) {
+            try {
+                $currentPage = 1;
+                $listPageItemsTrade = [];
+
+                foreach ($this->itemsTrade as $itemTrade) {
+                    $listPageItemsTrade[$currentPage][] = $itemTrade;
+                    if (count($listPageItemsTrade[$currentPage]) === $limitItemsInPage) {
+                        if ($currentPage === $page) break;
+                        $currentPage++;
+                    }
+                    FiberManager::wait();
+                }
+
+                $resolve($listPageItemsTrade[$page] ?? []);
+            } catch (Throwable $e) {
+                $reject($e);
+            }
+        });
+    }
+
+    public function getMaxListPageItemsTrade(int $limitItemsInPage): float
+    {
+        return ceil(count($this->itemsTrade) / $limitItemsInPage);
+    }
+
+    public static function fromArray(array $data): self
+    {
+        $tradeInterfaceStructData = new self($data['name'], $data['description']);
+        $tradeInterfaceStructData->setUid($data['uid']);
+        $tradeInterfaceStructData->setTypeTrade($data['typeTrade']);
+        $tradeInterfaceStructData->setItemsBackGround($data['itemsBackGround']);
+        $tradeInterfaceStructData->setItemsTrade($data['itemsTrade']);
+        $tradeInterfaceStructData->setSlotNextPage($data['slotNextPage']);
+        $tradeInterfaceStructData->setSlotPrevious($data['slotPrevious']);
+        $tradeInterfaceStructData->setItemNextPage($data['itemNextPage']);
+        $tradeInterfaceStructData->setItemPrevious($data['itemPrevious']);
+        $tradeInterfaceStructData->setItemSpace(ItemUtil::decodeItem($data['itemSpace']));
+        return $tradeInterfaceStructData;
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function removeItemTrade(
+        Item|null $itemA,
+        Item|null $itemB,
+        Item|null $itemC,
+        Item      $itemOutput
+    ): Async
+    {
+        return new Async(function () use ($itemA, $itemB, $itemC, $itemOutput): bool {
+            $qualifiedA = $qualifiedB = $qualifiedC = $qualifiedOutput = false;
+            foreach ($this->itemsTrade as $case => $itemTrade) {
+                $itemTrade = ItemTrade::fromArray($itemTrade);
+                if ($itemTrade->getItemOutput()->equals($itemOutput)) {
+                    /** @var Item|null $item */
+                    foreach ([$itemA, $itemB, $itemC, $itemOutput] as $item) {
+                        if ($item === null) continue;
+                        if ($itemTrade->getItemA()->equals($item)) $qualifiedA = true;
+                        if ($itemTrade->getItemB()->equals($item)) $qualifiedB = true;
+                        if ($itemTrade->getItemC()->equals($item)) $qualifiedC = true;
+                        if ($itemTrade->getItemOutput()->equals($item)) $qualifiedOutput = true;
+                        FiberManager::wait();
+                    }
+                    if ($qualifiedA && $qualifiedB && $qualifiedC && $qualifiedOutput) {
+                        unset($this->itemsTrade[$case]);
+                        $this->save();
+                        break;
+                    }
+                }
+                FiberManager::wait();
+            }
+
+            return $qualifiedA && $qualifiedB && $qualifiedC && $qualifiedOutput;
+        });
+    }
+
+    public function save(): void
+    {
+        try {
+            $config = VNPCTradeGUI::getConfigManager()::createTradeConfig(ColorUtil::removeColor($this->name));
+            $config->setAll($this->toArray());
+            $config->save();
+        } catch (Throwable $e) {
+            VNPCTradeGUI::getInstance()->getLogger()->error($e->getMessage());
+        }
+    }
+
+    public function __toString(): string
+    {
+        return json_encode($this->toArray());
+    }
+
+}

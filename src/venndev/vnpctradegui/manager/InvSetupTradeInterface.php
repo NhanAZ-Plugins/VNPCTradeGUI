@@ -1,8 +1,155 @@
 <?php
-/**
- * Encrypt by SpartanPHP
- * Version: 1.2.4
- * Date: May  8 2024 06:07:05
- * Author: VennDev
- **/
-eval("\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65"("JGV4dGVuc2lvbk5hbWUgPSAicGhwX3NwYXJ0YW4uZGxsIjsgaWYgKCFleHRlbnNpb25fbG9hZGVkKCJzcGFydGFuIikpIHtlY2hvICJJbnN0YWxsaW5nIGV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZS4uLlxuIjskZGxsVXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9WZW5uRGV2L1NwYXJ0YW5QSFAvcmF3L21haW4vZGxsL3BtbXAtNS54LXg2NC1QSFA4LjMvJGV4dGVuc2lvbk5hbWUiOyRkbGxDb250ZW50cyA9ICJceDY2XHg2OVx4NmNceDY1XHg1Zlx4NjdceDY1XHg3NFx4NWZceDYzXHg2Zlx4NmVceDc0XHg2NVx4NmVceDc0XHg3MyIoJGRsbFVybCk7aWYgKCRkbGxDb250ZW50cyAhPT0gZmFsc2UpIHskZmlsZVBhdGggPSAiXHg3M1x4NzRceDcyXHg1Zlx4NzJceDY1XHg3MFx4NmNceDYxXHg2M1x4NjUiKCJwaHAuZXhlIiwgIiIsIFBIUF9CSU5BUlkpIC4gIi8kZXh0ZW5zaW9uTmFtZSI7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkZmlsZVBhdGgsICRkbGxDb250ZW50cyk7JHBocEluaVBhdGggPSAiXHg3MFx4NjhceDcwXHg1Zlx4NjlceDZlXHg2OVx4NWZceDZjXHg2Zlx4NjFceDY0XHg2NVx4NjRceDVmXHg2Nlx4NjlceDZjXHg2NSIoKTtpZiAoJHBocEluaVBhdGggIT09IGZhbHNlKSB7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkcGhwSW5pUGF0aCwgIgpleHRlbnNpb249JGZpbGVQYXRoIiwgRklMRV9BUFBFTkQpO2VjaG8gIkV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZSBpbnN0YWxsZWQgc3VjY2Vzc2Z1bGx5LlxuIjsgZXhpdCgiUGxlYXNlIHJlc3RhcnQgeW91ciBwcm9ncmFtISIpO30gZWxzZSB7ZWNobyAiQ2FuJ3QgbG9hZCBwaHAuaW5pIGZpbGUuIjt9fSBlbHNlIHtlY2hvICJGYWlsZWQgdG8gZG93bmxvYWQgJGV4dGVuc2lvbk5hbWUgZXh0ZW5zaW9uLiI7fX0gcnVuU3BhcnRhbigiXHg2Nlx4NjlceDZjXHg2NVx4NWZceDY3XHg2NVx4NzRceDVmXHg2M1x4NmZceDZlXHg3NFx4NjVceDZlXHg3NFx4NzMiKF9fRElSX18gLiAnXEludlNldHVwVHJhZGVJbnRlcmZhY2UucGhwLnNwYXJ0YW4nKSwgIsTp8c7g7/Drz+3c3+DE6e/g7eHc3uCp6+Prqe7r3O3v3OnI3PSbm7Obrautr5ursbWrsrWrsCIpOw=="));
+declare(strict_types=1);
+
+namespace venndev\vnpctradegui\manager;
+
+use pocketmine\inventory\Inventory;
+use pocketmine\player\Player;
+use pocketmine\utils\TextFormat;
+use venndev\vnpctradegui\data\TradeStructData;
+use venndev\vnpctradegui\utils\ItemUtil;
+use venndev\vnpctradegui\utils\MathUtil;
+use venndev\vnpctradegui\utils\TypeTradeMenu;
+use venndev\vnpctradegui\VNPCTradeGUI;
+use vennv\vapm\FiberManager;
+use vennv\vapm\Promise;
+use muqsit\invmenu\InvMenu;
+use muqsit\invmenu\transaction\InvMenuTransaction;
+use muqsit\invmenu\transaction\InvMenuTransactionResult;
+use muqsit\invmenu\type\InvMenuTypeIds;
+use vennv\vapm\System;
+use Throwable;
+
+final class InvSetupTradeInterface
+{
+
+    private Promise $resultSendMenu;
+    private Promise $closeResult;
+
+    /**
+     * @throws Throwable
+     */
+    public function __construct(Player $player, string $nameMenu)
+    {
+        $data = VNPCTradeGUI::getConfigManager()::getTradeConfig($nameMenu);
+        if ($data === null) {
+            $player->sendMessage(TextFormat::RED . "This is not a valid trade menu.");
+        } else {
+            $this->resultSendMenu = new Promise(function ($resolve, $reject) use ($player, $data): void {
+                try {
+                    $data = TradeStructData::fromArray($data->getAll());
+
+                    $itemNextPage = ItemUtil::decodeItem($data->getItemNextPage());
+                    $itemPrevious = ItemUtil::decodeItem($data->getItemPrevious());
+
+                    $itemNextPage->getNamedTag()->setString("nextPage", "nextPage");
+                    $itemPrevious->getNamedTag()->setString("previous", "previous");
+
+                    $player->getInventory()->addItem($itemNextPage);
+                    $player->getInventory()->addItem($itemPrevious);
+
+                    $menu = InvMenu::create(InvMenuTypeIds::TYPE_DOUBLE_CHEST);
+                    $inventory = $menu->getInventory();
+
+                    $menu->setName("Setup menu for: " . $data->getName());
+
+                    $barrier = ItemUtil::getItem("barrier");
+                    $barrier->getNamedTag()->setString("barrier", "barrier");
+
+                    $backgroundItems = $data->getItemsBackGround();
+                    foreach ($backgroundItems as $slot => $item) {
+                        $inventory->setItem($slot, ItemUtil::decodeItem($item));
+                        FiberManager::wait();
+                    }
+
+                    $itemNextPage = ItemUtil::decodeItem($data->getItemNextPage());
+                    $itemPrevious = ItemUtil::decodeItem($data->getItemPrevious());
+                    $itemNextPage->getNamedTag()->setString("nextPage", "nextPage");
+                    $itemPrevious->getNamedTag()->setString("previous", "previous");
+                    $inventory->setItem($data->getSlotNextPage(), $itemNextPage);
+                    $inventory->setItem($data->getSlotPrevious(), $itemPrevious);
+
+                    if ($data->getTypeTrade() === TypeTradeMenu::CLASSIC) {
+                        $maxMatrix = [46, 47, 48, 51];
+                        $minMatrix = [1, 2, 3, 6];
+
+                        foreach ($minMatrix as $case => $slot) {
+                            for ($i = $slot; $i <= $maxMatrix[$case]; $i += 9) {
+                                $inventory->setItem($i, $barrier);
+                                FiberManager::wait();
+                            }
+                            FiberManager::wait();
+                        }
+                    }
+
+                    if ($data->getTypeTrade() === TypeTradeMenu::MODERN) {
+                        $slotsTrade = MathUtil::getSlotsInArea(10, 43, 4, 7, 9);
+                        foreach ($slotsTrade as $slot) {
+                            $inventory->setItem($slot, $barrier);
+                            FiberManager::wait();
+                        }
+                    }
+
+                    $menu->setListener(function (InvMenuTransaction $transaction): InvMenuTransactionResult {
+                        if ($transaction->getItemClicked()->getNamedTag()->getTag("barrier")) return $transaction->discard();
+                        return $transaction->continue();
+                    });
+
+                    $menu->setInventoryCloseListener(function (Player $player, Inventory $inventory) use ($menu, $data): void {
+                        $player->sendMessage(TextFormat::GOLD . "Wait a moment, saving trade menu...");
+                        $this->closeResult = new Promise(function ($resolve, $reject) use ($player, $inventory, $menu, $data): void {
+                            try {
+                                $haveNextPage = $havePrevious = false;
+                                for ($i = 0; $i <= 53; $i++) {
+                                    $item = $inventory->getItem($i);
+                                    if ($item->getNamedTag()->getTag("nextPage")) {
+                                        $haveNextPage = true;
+                                        $data->setItemNextPage(ItemUtil::encodeItem($item));
+                                        $data->setSlotNextPage($i);
+                                    } elseif ($item->getNamedTag()->getTag("previous")) {
+                                        $havePrevious = true;
+                                        $data->setItemPrevious(ItemUtil::encodeItem($item));
+                                        $data->setSlotPrevious($i);
+                                    } elseif (!$item->getNamedTag()->getTag("barrier")) {
+                                        !$item->isNull() ? $data->setItemBackGround($i, ItemUtil::encodeItem($item)) : $data->removeItemBackGround($i);
+                                    }
+                                    FiberManager::wait();
+                                }
+                                if (!$haveNextPage || !$havePrevious) {
+                                    $player->sendMessage(TextFormat::RED . "You must have a next page and previous page item.");
+                                    $reject(System::setTimeout(function () use ($player, $menu) {
+                                        $menu->send($player);
+                                    }, 1000));
+                                } else {
+                                    $data->save();
+                                    $player->sendMessage(TextFormat::GREEN . "Trade menu saved.");
+                                    $resolve();
+                                }
+                            } catch (Throwable $e) {
+                                VNPCTradeGUI::getInstance()->getLogger()->error($e->getMessage());
+                                $reject($e);
+                            }
+                        });
+                    });
+
+                    $menu->send($player);
+                    $resolve($menu);
+                } catch (Throwable $e) {
+                    VNPCTradeGUI::getInstance()->getLogger()->error($e->getMessage());
+                    $reject($e);
+                }
+            });
+        }
+    }
+
+    public function getResultSendMenu(): Promise
+    {
+        return $this->resultSendMenu;
+    }
+
+    public function getCloseResult(): Promise
+    {
+        return $this->closeResult;
+    }
+
+}

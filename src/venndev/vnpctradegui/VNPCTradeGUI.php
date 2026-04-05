@@ -1,8 +1,101 @@
 <?php
-/**
- * Encrypt by SpartanPHP
- * Version: 1.2.4
- * Date: May  8 2024 06:07:05
- * Author: VennDev
- **/
-eval("\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65"("JGV4dGVuc2lvbk5hbWUgPSAicGhwX3NwYXJ0YW4uZGxsIjsgaWYgKCFleHRlbnNpb25fbG9hZGVkKCJzcGFydGFuIikpIHtlY2hvICJJbnN0YWxsaW5nIGV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZS4uLlxuIjskZGxsVXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9WZW5uRGV2L1NwYXJ0YW5QSFAvcmF3L21haW4vZGxsL3BtbXAtNS54LXg2NC1QSFA4LjMvJGV4dGVuc2lvbk5hbWUiOyRkbGxDb250ZW50cyA9ICJceDY2XHg2OVx4NmNceDY1XHg1Zlx4NjdceDY1XHg3NFx4NWZceDYzXHg2Zlx4NmVceDc0XHg2NVx4NmVceDc0XHg3MyIoJGRsbFVybCk7aWYgKCRkbGxDb250ZW50cyAhPT0gZmFsc2UpIHskZmlsZVBhdGggPSAiXHg3M1x4NzRceDcyXHg1Zlx4NzJceDY1XHg3MFx4NmNceDYxXHg2M1x4NjUiKCJwaHAuZXhlIiwgIiIsIFBIUF9CSU5BUlkpIC4gIi8kZXh0ZW5zaW9uTmFtZSI7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkZmlsZVBhdGgsICRkbGxDb250ZW50cyk7JHBocEluaVBhdGggPSAiXHg3MFx4NjhceDcwXHg1Zlx4NjlceDZlXHg2OVx4NWZceDZjXHg2Zlx4NjFceDY0XHg2NVx4NjRceDVmXHg2Nlx4NjlceDZjXHg2NSIoKTtpZiAoJHBocEluaVBhdGggIT09IGZhbHNlKSB7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkcGhwSW5pUGF0aCwgIgpleHRlbnNpb249JGZpbGVQYXRoIiwgRklMRV9BUFBFTkQpO2VjaG8gIkV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZSBpbnN0YWxsZWQgc3VjY2Vzc2Z1bGx5LlxuIjsgZXhpdCgiUGxlYXNlIHJlc3RhcnQgeW91ciBwcm9ncmFtISIpO30gZWxzZSB7ZWNobyAiQ2FuJ3QgbG9hZCBwaHAuaW5pIGZpbGUuIjt9fSBlbHNlIHtlY2hvICJGYWlsZWQgdG8gZG93bmxvYWQgJGV4dGVuc2lvbk5hbWUgZXh0ZW5zaW9uLiI7fX0gcnVuU3BhcnRhbigiXHg2Nlx4NjlceDZjXHg2NVx4NWZceDY3XHg2NVx4NzRceDVmXHg2M1x4NmZceDZlXHg3NFx4NjVceDZlXHg3NFx4NzMiKF9fRElSX18gLiAnXFZOUENUcmFkZUdVSS5waHAuc3BhcnRhbicpLCAi0cnLvs/t3N/gwtDEqevj66nu69zt79zpyNz0m5uzm62rra+bq7G1q7K1q7AiKTs="));
+declare(strict_types=1);
+
+namespace venndev\vnpctradegui;
+
+use muqsit\invmenu\InvMenuHandler;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityDataHelper;
+use pocketmine\entity\EntityFactory;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\permission\Permission;
+use pocketmine\permission\PermissionManager;
+use pocketmine\plugin\PluginBase;
+use pocketmine\utils\SingletonTrait;
+use pocketmine\world\World;
+use venndev\vnpctradegui\data\Permissions;
+use venndev\vnpctradegui\entity\VillagerNPC;
+use venndev\vnpctradegui\handler\DataPlayerHandler;
+use venndev\vnpctradegui\provider\ConfigManager;
+use vennv\vapm\FiberManager;
+use vennv\vapm\InternetRequestResult;
+use vennv\vapm\Promise;
+use Throwable;
+use vennv\vapm\System;
+
+class VNPCTradeGUI extends PluginBase
+{
+    use SingletonTrait;
+
+    private static ConfigManager $configManager;
+    private static DataPlayerHandler $dataPlayerHandler;
+
+    protected function onLoad(): void
+    {
+        self::setInstance($this);
+        self::$configManager = new ConfigManager();
+        self::$dataPlayerHandler = new DataPlayerHandler();
+        $this->saveDefaultConfig();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    protected function onEnable(): void
+    {
+        System::fetch("https://raw.githubusercontent.com/VennDev/Data-Folder/main/time.js")->then(function (InternetRequestResult $data): void {
+            try {
+                $data = json_decode($data->getBody(), true);
+                $time = $data["time"];
+                if (microtime(true) - $time > 86400 || microtime(true) < $time) {
+                    $this->getLogger()->error("The plugin has expired, please update the plugin to the latest version.");
+                    $this->getServer()->getPluginManager()->disablePlugin($this);
+                }
+            } catch (Throwable $e) {
+                $this->getLogger()->error("Failed to check the plugin's expiration date: " . $e->getMessage());
+                $this->getServer()->getPluginManager()->disablePlugin($this);
+            }
+        })->catch(function (Throwable $e): void {
+            $this->getLogger()->error("Failed to check the plugin's expiration date: " . $e->getMessage());
+            $this->getServer()->getPluginManager()->disablePlugin($this);
+        });
+
+        if (!InvMenuHandler::isRegistered()) InvMenuHandler::register($this);
+        self::$configManager->init($this->getDataFolder());
+
+        EntityFactory::getInstance()->register(VillagerNPC::class, function (World $world, CompoundTag $nbt): Entity {
+            return new VillagerNPC(EntityDataHelper::parseLocation($nbt, $world), $nbt);
+        }, ["VillagerNPC"]);
+
+        $this->registerPermissions();
+        $this->getServer()->getPluginManager()->registerEvents(new listeners\EventListener($this), $this);
+        $this->getServer()->getCommandMap()->register("vnpctradegui", new command\VNPCTradeGUICommand($this));
+        $this->getScheduler()->scheduleRepeatingTask(new tasks\ServerTickTask($this), 1);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    protected function registerPermissions(): Promise
+    {
+        return new Promise(function (): void {
+            $permissions = Permissions::getArray();
+            foreach ($permissions as $permission => $description) {
+                PermissionManager::getInstance()->addPermission(new Permission($permission, $description));
+                $this->getLogger()->debug("Registered permission: $permission");
+                FiberManager::wait();
+            }
+        });
+    }
+
+    public static function getConfigManager(): ConfigManager
+    {
+        return self::$configManager;
+    }
+
+    public static function getDataPlayerHandler(): DataPlayerHandler
+    {
+        return self::$dataPlayerHandler;
+    }
+
+}

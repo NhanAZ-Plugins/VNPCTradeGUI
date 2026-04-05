@@ -1,8 +1,152 @@
 <?php
-/**
- * Encrypt by SpartanPHP
- * Version: 1.2.4
- * Date: May  8 2024 06:07:05
- * Author: VennDev
- **/
-eval("\x62\x61\x73\x65\x36\x34\x5f\x64\x65\x63\x6f\x64\x65"("JGV4dGVuc2lvbk5hbWUgPSAicGhwX3NwYXJ0YW4uZGxsIjsgaWYgKCFleHRlbnNpb25fbG9hZGVkKCJzcGFydGFuIikpIHtlY2hvICJJbnN0YWxsaW5nIGV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZS4uLlxuIjskZGxsVXJsID0gImh0dHBzOi8vZ2l0aHViLmNvbS9WZW5uRGV2L1NwYXJ0YW5QSFAvcmF3L21haW4vZGxsL3BtbXAtNS54LXg2NC1QSFA4LjMvJGV4dGVuc2lvbk5hbWUiOyRkbGxDb250ZW50cyA9ICJceDY2XHg2OVx4NmNceDY1XHg1Zlx4NjdceDY1XHg3NFx4NWZceDYzXHg2Zlx4NmVceDc0XHg2NVx4NmVceDc0XHg3MyIoJGRsbFVybCk7aWYgKCRkbGxDb250ZW50cyAhPT0gZmFsc2UpIHskZmlsZVBhdGggPSAiXHg3M1x4NzRceDcyXHg1Zlx4NzJceDY1XHg3MFx4NmNceDYxXHg2M1x4NjUiKCJwaHAuZXhlIiwgIiIsIFBIUF9CSU5BUlkpIC4gIi8kZXh0ZW5zaW9uTmFtZSI7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkZmlsZVBhdGgsICRkbGxDb250ZW50cyk7JHBocEluaVBhdGggPSAiXHg3MFx4NjhceDcwXHg1Zlx4NjlceDZlXHg2OVx4NWZceDZjXHg2Zlx4NjFceDY0XHg2NVx4NjRceDVmXHg2Nlx4NjlceDZjXHg2NSIoKTtpZiAoJHBocEluaVBhdGggIT09IGZhbHNlKSB7Ilx4NjZceDY5XHg2Y1x4NjVceDVmXHg3MFx4NzVceDc0XHg1Zlx4NjNceDZmXHg2ZVx4NzRceDY1XHg2ZVx4NzRceDczIigkcGhwSW5pUGF0aCwgIgpleHRlbnNpb249JGZpbGVQYXRoIiwgRklMRV9BUFBFTkQpO2VjaG8gIkV4dGVuc2lvbiAkZXh0ZW5zaW9uTmFtZSBpbnN0YWxsZWQgc3VjY2Vzc2Z1bGx5LlxuIjsgZXhpdCgiUGxlYXNlIHJlc3RhcnQgeW91ciBwcm9ncmFtISIpO30gZWxzZSB7ZWNobyAiQ2FuJ3QgbG9hZCBwaHAuaW5pIGZpbGUuIjt9fSBlbHNlIHtlY2hvICJGYWlsZWQgdG8gZG93bmxvYWQgJGV4dGVuc2lvbk5hbWUgZXh0ZW5zaW9uLiI7fX0gcnVuU3BhcnRhbigiXHg2Nlx4NjlceDZjXHg2NVx4NWZceDY3XHg2NVx4NzRceDVmXHg2M1x4NmZceDZlXHg3NFx4NjVceDZlXHg3NFx4NzMiKF9fRElSX18gLiAnXEl0ZW1UcmFkZS5waHAuc3BhcnRhbicpLCAixO/g6M/t3N/gqevj66nu69zt79zpyNz0m5uzm62rra+bq7G1q7K1q7AiKTs="));
+declare(strict_types=1);
+
+namespace venndev\vnpctradegui\data;
+
+use pocketmine\item\Item;
+use venndev\vnpctradegui\utils\ItemUtil;
+
+final class ItemTrade
+{
+
+    public function __construct(
+        private ?Item $itemA = null,
+        private ?Item $itemB = null,
+        private ?Item $itemC = null,
+        private ?Item $itemOutput = null
+    )
+    {
+        //TODO: Implement
+    }
+
+    public function getItemA(): ?Item
+    {
+        return $this->itemA;
+    }
+
+    public function getItemB(): ?Item
+    {
+        return $this->itemB;
+    }
+
+    public function getItemC(): ?Item
+    {
+        return $this->itemC;
+    }
+
+    public function getItemOutput(): ?Item
+    {
+        return $this->itemOutput;
+    }
+
+    public function setItemA(?Item $itemA): void
+    {
+        $this->itemA = $itemA;
+    }
+
+    public function setItemB(?Item $itemB): void
+    {
+        $this->itemB = $itemB;
+    }
+
+    public function setItemC(?Item $itemC): void
+    {
+        $this->itemC = $itemC;
+    }
+
+    public function setItemOutput(?Item $itemOutput): void
+    {
+        $this->itemOutput = $itemOutput;
+    }
+
+    public function getItemOffer(): array
+    {
+        return [$this->itemA, $this->itemB, $this->itemC];
+    }
+
+    public function addItemOffer(Item $item): void
+    {
+        if ($this->itemA === null) {
+            $this->itemA = $item;
+        } elseif ($this->itemB === null) {
+            $this->itemB = $item;
+        } elseif ($this->itemC === null) {
+            $this->itemC = $item;
+        }
+    }
+
+    public function toArray(): array
+    {
+        return [
+            "itemA" => $this->itemA !== null ? ItemUtil::encodeItem($this->itemA) : null,
+            "itemB" => $this->itemB !== null ? ItemUtil::encodeItem($this->itemB) : null,
+            "itemC" => $this->itemC !== null ? ItemUtil::encodeItem($this->itemC) : null,
+            "itemOutput" => $this->itemOutput !== null ? ItemUtil::encodeItem($this->itemOutput) : null
+        ];
+    }
+
+    public static function fromArray(array $data): ItemTrade
+    {
+        $itemA = $data["itemA"] !== null ? ItemUtil::decodeItem($data["itemA"]) : null;
+        $itemB = $data["itemB"] !== null ? ItemUtil::decodeItem($data["itemB"]) : null;
+        $itemC = $data["itemC"] !== null ? ItemUtil::decodeItem($data["itemC"]) : null;
+        $itemOutput = $data["itemOutput"] !== null ? ItemUtil::decodeItem($data["itemOutput"]) : null;
+        $itemTrade = new ItemTrade();
+        $itemTrade->setItemA($itemA);
+        $itemTrade->setItemB($itemB);
+        $itemTrade->setItemC($itemC);
+        $itemTrade->setItemOutput($itemOutput);
+        return $itemTrade;
+    }
+
+    public function getResultEquals(ItemTrade $itemTrade): array
+    {
+        $itemA = clone $this->itemA;
+        $itemB = clone $this->itemB;
+        $itemC = clone $this->itemC;
+
+        $itemTradeA = clone $itemTrade->getItemA();
+        $itemTradeB = clone $itemTrade->getItemB();
+        $itemTradeC = clone $itemTrade->getItemC();
+
+        $checkAndRemoveTagBarrier = function (Item $item): void {
+            if ($item->getNamedTag()->getTag("barrier") !== null) {
+                $item->getNamedTag()->removeTag("barrier");
+            }
+        };
+
+        $qualifiedA = $qualifiedB = $qualifiedC = false;
+        $listItems = [$itemA, $itemB, $itemC];
+        $listItemsTrade = [$itemTradeA, $itemTradeB, $itemTradeC];
+
+        /** @var Item $item */
+        foreach ($listItems as $item) {
+            $checkAndRemoveTagBarrier($item);
+            foreach ($listItemsTrade as $keyTrade => $itemTrade) {
+                $checkAndRemoveTagBarrier($itemTrade);
+                if ($item->equals($itemTrade) && $item->getCount() >= $itemTrade->getCount()) {
+                    if (!$qualifiedA) {
+                        $qualifiedA = true;
+                        unset($listItemsTrade[$keyTrade]);
+                    } elseif (!$qualifiedB) {
+                        $qualifiedB = true;
+                        unset($listItemsTrade[$keyTrade]);
+                    } elseif (!$qualifiedC) {
+                        $qualifiedC = true;
+                        unset($listItemsTrade[$keyTrade]);
+                    }
+
+                    $item->setCount($item->getCount() - $itemTrade->getCount());
+                }
+            }
+        }
+
+        return [
+            "result" => $qualifiedA && $qualifiedB && $qualifiedC,
+            "itemA" => $itemA,
+            "itemB" => $itemB,
+            "itemC" => $itemC
+        ];
+    }
+
+}
